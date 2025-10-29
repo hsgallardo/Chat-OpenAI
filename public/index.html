@@ -23,7 +23,7 @@
 
   <div id="chat"></div>
 
-  <button id="recordBtn">Grabar voz</button>
+  <button id="recordBtn">🎙️ Grabar voz</button>
 
   <div style="margin-top: 10px;">
     <textarea id="textInput" rows="3" placeholder="Escribe tu mensaje aquí..."></textarea>
@@ -39,7 +39,6 @@
     const textInput = document.getElementById('textInput');
     const chatDiv = document.getElementById('chat');
 
-    // Función para reproducir audio Base64
     function reproducirAudioBase64(base64) {
       const byteCharacters = atob(base64.split(',')[1]);
       const byteNumbers = new Array(byteCharacters.length);
@@ -53,7 +52,6 @@
       audio.play();
     }
 
-    // Agregar mensaje al chat
     function agregarMensaje(text, clase) {
       const div = document.createElement('div');
       div.className = clase;
@@ -62,7 +60,6 @@
       chatDiv.scrollTop = chatDiv.scrollHeight;
     }
 
-    // Efecto de tipeo para mensajes IA
     function mostrarRespuestaConTipeo(data) {
       agregarMensaje(`Tú: ${data.question}`, 'user');
       const aiDiv = document.createElement('div');
@@ -85,7 +82,6 @@
       chatDiv.scrollTop = chatDiv.scrollHeight;
     }
 
-    // Grabación de voz
     recordBtn.addEventListener('click', async () => {
       if (!mediaRecorder || mediaRecorder.state === "inactive") {
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -94,11 +90,11 @@
         mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
         mediaRecorder.onstop = enviarAudio;
         mediaRecorder.start();
-        recordBtn.textContent = " Detener grabación";
-        agregarMensaje("Grabando...", 'user');
+        recordBtn.textContent = "⏹️ Detener grabación";
+        agregarMensaje("🎤 Grabando...", 'user');
       } else {
         mediaRecorder.stop();
-        recordBtn.textContent = " Grabar voz";
+        recordBtn.textContent = "🎙️ Grabar voz";
       }
     });
 
@@ -112,12 +108,11 @@
         const data = await res.json();
         mostrarRespuestaConTipeo(data);
       } catch (err) {
-        agregarMensaje("Error al procesar la voz.", 'ai');
+        agregarMensaje(" Error al procesar la voz.", 'ai');
         console.error(err);
       }
     }
 
-    // Enviar texto
     sendTextBtn.addEventListener('click', async () => {
       const userText = textInput.value.trim();
       if (!userText) return;
@@ -132,7 +127,7 @@
         const data = await res.json();
         mostrarRespuestaConTipeo(data);
       } catch (err) {
-        agregarMensaje("Error al procesar el texto.", 'ai');
+        agregarMensaje(" Error al procesar el texto.", 'ai');
         console.error(err);
       }
     });

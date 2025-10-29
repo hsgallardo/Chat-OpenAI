@@ -14,10 +14,15 @@ const upload = multer({ storage: multer.memoryStorage() });
 app.use(express.static('public'));
 app.use(express.json());
 
-// Embeddings de tus PDFs
+// === Cargar embeddings de tus PDFs ===
 const docsEmbeddings = JSON.parse(fs.readFileSync('embeddings.json', 'utf-8'));
 
-// Similitud coseno
+// === Memoria de conversación ===
+let historial = [
+  { role: "system", content: "Eres un asistente inteligente. Puedes usar los PDFs cargados si son relevantes, pero también responder preguntas generales." }
+];
+
+// === Función de similitud coseno ===
 function cosineSimilarity(a, b) {
   let dot = 0, normA = 0, normB = 0;
   for (let i = 0; i < a.length; i++) {
@@ -28,7 +33,7 @@ function cosineSimilarity(a, b) {
   return dot / (Math.sqrt(normA) * Math.sqrt(normB));
 }
 
-// Generar audio Base64 con ElevenLabs
+// === Generar audio con ElevenLabs ===
 async function generarVozElevenLabsBase64(text, voiceId) {
   const apiKey = process.env.ELEVENLABS_API_KEY;
   const url = `https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`;
@@ -45,14 +50,19 @@ async function generarVozElevenLabsBase64(text, voiceId) {
   return `data:audio/mpeg;base64,${base64Audio}`;
 }
 
-// Función para generar respuesta
+// === Generar respuesta con contexto ===
 async function generarRespuesta(userText) {
+  // Guardar el mensaje del usuario
+  historial.push({ role: "user", content: userText });
+
+  // Crear embedding de la consulta
   const queryEmb = await openai.embeddings.create({
     model: "text-embedding-3-small",
     input: userText
   });
   const qEmbedding = queryEmb.data[0].embedding;
 
+  // Buscar documento más similar
   let topDoc = docsEmbeddings[0];
   let maxSim = -1;
   for (const doc of docsEmbeddings) {
@@ -63,27 +73,46 @@ async function generarRespuesta(userText) {
     }
   }
 
+  // Si el documento es relevante, añadirlo como contexto
   const UMBRAL_SIMILITUD = 0.7;
-  const inputText = maxSim > UMBRAL_SIMILITUD
-    ? `Documentos relevantes:\n${topDoc.text}\nPregunta: ${userText}`
-    : userText;
+  if (maxSim > UMBRAL_SIMILITUD) {
+    historial.push({
+      role: "system",
+      content: `Información relevante del documento:\n${topDoc.text}`
+    });
+  }
 
+  // Generar respuesta con el historial completo
   const responseGPT = await openai.responses.create({
     model: "gpt-4.1-mini",
-    input: [
-      { role: "system", content: "Eres un asistente inteligente. Puedes usar los PDFs cargados si son relevantes, pero también responder preguntas generales." },
-      { role: "user", content: inputText }
-    ]
+    input: historial
   });
 
   const answer = responseGPT.output_text;
+
+  // Guardar la respuesta del asistente
+  historial.push({ role: "assistant", content: answer });
+
+  // Generar voz
   const VOICE_ID = process.env.ELEVENLABS_VOICE_ID;
   const audioBase64 = await generarVozElevenLabsBase64(answer, VOICE_ID);
 
   return { question: userText, reply: answer, audio: audioBase64 };
 }
 
-// Endpoint de audio
+// === Endpoint para texto ===
+app.post('/api/texto', async (req, res) => {
+  try {
+    const userText = req.body.text;
+    const responseData = await generarRespuesta(userText);
+    res.json(responseData);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Error procesando el texto" });
+  }
+});
+
+// === Endpoint para audio ===
 app.post('/api/voz', upload.single('audio'), async (req, res) => {
   try {
     const tempPath = join(tmpdir(), `${Date.now()}.webm`);
@@ -102,18 +131,6 @@ app.post('/api/voz', upload.single('audio'), async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Error procesando el audio" });
-  }
-});
-
-// Endpoint de texto
-app.post('/api/texto', async (req, res) => {
-  try {
-    const userText = req.body.text;
-    const responseData = await generarRespuesta(userText);
-    res.json(responseData);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Error procesando el texto" });
   }
 });
 
