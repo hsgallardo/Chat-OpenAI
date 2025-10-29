@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Asistente IA Conversacional</title>
+  <style>
+    body { font-family: Arial; margin: 20px; }
+    #chat {
+      border: 1px solid #ccc;
+      padding: 10px;
+      height: 400px;
+      overflow-y: auto;
+      white-space: pre-wrap;
+    }
+    textarea { width: 100%; font-size: 16px; }
+    button { margin-top: 5px; padding: 10px 20px; font-size: 16px; }
+    .user { color: blue; margin-top: 10px; }
+    .ai { color: green; margin-top: 10px; }
+  </style>
+</head>
+<body>
+  <h2>Chat IA</h2>
+
+  <div id="chat"></div>
+
+  <button id="recordBtn">Grabar voz</button>
+
+  <div style="margin-top: 10px;">
+    <textarea id="textInput" rows="3" placeholder="Escribe tu mensaje aquí..."></textarea>
+    <br>
+    <button id="sendTextBtn">Enviar texto</button>
+  </div>
+
+  <script>
+    let mediaRecorder;
+    let audioChunks = [];
+    const recordBtn = document.getElementById('recordBtn');
+    const sendTextBtn = document.getElementById('sendTextBtn');
+    const textInput = document.getElementById('textInput');
+    const chatDiv = document.getElementById('chat');
+
+    // Función para reproducir audio Base64
+    function reproducirAudioBase64(base64) {
+      const byteCharacters = atob(base64.split(',')[1]);
+      const byteNumbers = new Array(byteCharacters.length);
+      for (let i = 0; i < byteCharacters.length; i++) {
+        byteNumbers[i] = byteCharacters.charCodeAt(i);
+      }
+      const byteArray = new Uint8Array(byteNumbers);
+      const blob = new Blob([byteArray], { type: 'audio/mpeg' });
+      const url = URL.createObjectURL(blob);
+      const audio = new Audio(url);
+      audio.play();
+    }
+
+    // Agregar mensaje al chat
+    function agregarMensaje(text, clase) {
+      const div = document.createElement('div');
+      div.className = clase;
+      div.textContent = text;
+      chatDiv.appendChild(div);
+      chatDiv.scrollTop = chatDiv.scrollHeight;
+    }
+
+    // Efecto de tipeo para mensajes IA
+    function mostrarRespuestaConTipeo(data) {
+      agregarMensaje(`Tú: ${data.question}`, 'user');
+      const aiDiv = document.createElement('div');
+      aiDiv.className = 'ai';
+      chatDiv.appendChild(aiDiv);
+
+      let i = 0;
+      const velocidad = 25;
+      const reply = data.reply;
+
+      function escribir() {
+        if (i < reply.length) {
+          aiDiv.textContent += reply[i];
+          i++;
+          setTimeout(escribir, velocidad);
+        }
+      }
+      escribir();
+      if (data.audio) reproducirAudioBase64(data.audio);
+      chatDiv.scrollTop = chatDiv.scrollHeight;
+    }
+
+    // Grabación de voz
+    recordBtn.addEventListener('click', async () => {
+      if (!mediaRecorder || mediaRecorder.state === "inactive") {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        mediaRecorder = new MediaRecorder(stream);
+        audioChunks = [];
+        mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
+        mediaRecorder.onstop = enviarAudio;
+        mediaRecorder.start();
+        recordBtn.textContent = " Detener grabación";
+        agregarMensaje("Grabando...", 'user');
+      } else {
+        mediaRecorder.stop();
+        recordBtn.textContent = " Grabar voz";
+      }
+    });
+
+    async function enviarAudio() {
+      const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+      const formData = new FormData();
+      formData.append('audio', audioBlob, 'voz.webm');
+
+      try {
+        const res = await fetch('/api/voz', { method: 'POST', body: formData });
+        const data = await res.json();
+        mostrarRespuestaConTipeo(data);
+      } catch (err) {
+        agregarMensaje("Error al procesar la voz.", 'ai');
+        console.error(err);
+      }
+    }
+
+    // Enviar texto
+    sendTextBtn.addEventListener('click', async () => {
+      const userText = textInput.value.trim();
+      if (!userText) return;
+      textInput.value = '';
+
+      try {
+        const res = await fetch('/api/texto', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text: userText })
+        });
+        const data = await res.json();
+        mostrarRespuestaConTipeo(data);
+      } catch (err) {
+        agregarMensaje("Error al procesar el texto.", 'ai');
+        console.error(err);
+      }
+    });
+  </script>
+</body>
+</html>
