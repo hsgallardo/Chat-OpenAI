@@ -3,33 +3,20 @@
 <head>
   <meta charset="UTF-8">
   <title>Asistente IA Conversacional</title>
-  <style>
-    body { font-family: Arial; margin: 20px; }
-    #chat {
-      border: 1px solid #ccc;
-      padding: 10px;
-      height: 400px;
-      overflow-y: auto;
-      white-space: pre-wrap;
-    }
-    textarea { width: 100%; font-size: 16px; }
-    button { margin-top: 5px; padding: 10px 20px; font-size: 16px; }
-    .user { color: blue; margin-top: 10px; }
-    .ai { color: green; margin-top: 10px; }
-  </style>
+  <link rel="stylesheet" href="estilo.css">
 </head>
 <body>
   <h2>Chat IA</h2>
 
   <div id="chat"></div>
 
-  <button id="recordBtn">🎙️ Grabar voz</button>
+  <button id="recordBtn">Grabar voz</button>
 
-  <div style="margin-top: 10px;">
+  <div id="inputContainer">
     <textarea id="textInput" rows="3" placeholder="Escribe tu mensaje aquí..."></textarea>
-    <br>
     <button id="sendTextBtn">Enviar texto</button>
   </div>
+
 
   <script>
     let mediaRecorder;
@@ -90,11 +77,11 @@
         mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
         mediaRecorder.onstop = enviarAudio;
         mediaRecorder.start();
-        recordBtn.textContent = "⏹️ Detener grabación";
-        agregarMensaje("🎤 Grabando...", 'user');
+        recordBtn.textContent = "⏹ Detener grabación";
+        agregarMensaje("🎤Grabando...", 'user');
       } else {
         mediaRecorder.stop();
-        recordBtn.textContent = "🎙️ Grabar voz";
+        recordBtn.textContent = "Grabar voz";
       }
     });
 

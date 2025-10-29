@@ -1,0 +1,194 @@
+:root {
+  --bg-color: #0d1117;
+  --chat-bg: #161b22;
+  --user-bubble: #1f6feb;
+  --ai-bubble: #2ea043;
+  --text-color: #e6edf3;
+  --border-color: #30363d;
+  --shadow: 0 0 15px rgba(0, 0, 0, 0.4);
+  --radius: 16px;
+  --transition: 0.3s ease;
+  --font: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+body {
+  font-family: var(--font);
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  margin: 0;
+  padding: 30px;
+  height: 100vh;
+  box-sizing: border-box;
+}
+
+h2 {
+  font-size: 1.8rem;
+  margin-bottom: 15px;
+  color: #fff;
+  text-shadow: 0 0 10px rgba(255,255,255,0.1);
+}
+
+#chat {
+  width: 100%;
+  max-width: 800px;
+  height: 65vh;
+  background: var(--chat-bg);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius);
+  padding: 15px 20px;
+  overflow-y: auto;
+  box-shadow: var(--shadow);
+  scroll-behavior: smooth;
+}
+
+.user, .ai {
+  max-width: 80%;
+  padding: 12px 16px;
+  margin: 10px 0;
+  border-radius: var(--radius);
+  line-height: 1.5;
+  word-wrap: break-word;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+  animation: fadeIn 0.3s ease;
+}
+
+.user {
+  background-color: var(--user-bubble);
+  color: #fff;
+  margin-left: auto;
+  border-bottom-right-radius: 4px;
+}
+
+.ai {
+  background-color: var(--ai-bubble);
+  color: #fff;
+  margin-right: auto;
+  border-bottom-left-radius: 4px;
+}
+
+textarea {
+  width: 100%;
+  max-width: 800px;
+  background: #0d1117;
+  color: var(--text-color);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius);
+  padding: 12px;
+  font-size: 16px;
+  resize: none;
+  margin-top: 10px;
+  outline: none;
+  box-shadow: var(--shadow);
+  transition: var(--transition);
+}
+
+textarea:focus {
+  border-color: var(--user-bubble);
+  box-shadow: 0 0 10px rgba(31, 111, 235, 0.3);
+}
+
+button {
+  background-color: var(--user-bubble);
+  color: white;
+  border: none;
+  border-radius: var(--radius);
+  padding: 10px 18px;
+  font-size: 16px;
+  cursor: pointer;
+  margin: 8px 4px;
+  transition: var(--transition);
+  box-shadow: var(--shadow);
+}
+
+button:hover {
+  background-color: #388bfd;
+  transform: scale(1.03);
+}
+
+button:active {
+  transform: scale(0.98);
+}
+
+#recordBtn {
+  background-color: #d73a49;
+}
+
+#recordBtn:hover {
+  background-color: #f85149;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Scroll personalizado */
+#chat::-webkit-scrollbar {
+  width: 8px;
+}
+
+#chat::-webkit-scrollbar-thumb {
+  background: #444;
+  border-radius: 10px;
+}
+
+#chat::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+
+/* Animación de escritura */
+.ai::after {
+  content: '';
+  display: inline-block;
+  width: 6px;
+  height: 14px;
+  background-color: rgba(255,255,255,0.8);
+  margin-left: 4px;
+  animation: blink 1s infinite;
+  vertical-align: bottom;
+}
+
+@keyframes blink {
+  0%, 50%, 100% { opacity: 1; }
+  25%, 75% { opacity: 0; }
+}
+
+
+#inputContainer {
+  display: flex;
+  justify-content: center; /* centra horizontalmente */
+  align-items: center;
+  gap: 10px; /* espacio uniforme entre textarea y botón */
+  width: 100%;
+  max-width: 800px;
+  margin-top: 10px;
+}
+
+#inputContainer textarea {
+  flex: 1; /* ocupa todo el espacio disponible */
+  margin: 0; /* quitar márgenes innecesarios */
+}
+
+#inputContainer button {
+  margin: 0; /* quitar márgenes innecesarios */
+}
+
+
+/* Adaptación móvil */
+@media (max-width: 600px) {
+  #chat {
+    height: 60vh;
+    padding: 10px;
+  }
+  textarea {
+    font-size: 14px;
+  }
+  button {
+    width: 100%;
+    font-size: 14px;
+  }
+}
